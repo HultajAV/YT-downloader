@@ -10,28 +10,32 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Youtube to MP3")
         self.setGeometry(100, 100, 600, 200)
-
-        layout = QVBoxLayout()
-
+        
+        self.layout = QVBoxLayout()  # Użyj self.layout
+        
         self.label = QLabel("YouTube Link:")
         self.label.setAlignment(Qt.AlignCenter)  # Wyśrodkowanie tekstu
-        layout.addWidget(self.label)
-
+        self.layout.addWidget(self.label)
+        
         self.url_input = QLineEdit()
         self.url_input.textChanged.connect(self.validate_url)
-        layout.addWidget(self.url_input)
-
+        self.layout.addWidget(self.url_input)
+        
         self.download_button = QPushButton("Download MP3")
         self.download_button.clicked.connect(self.start_download)
-        layout.addWidget(self.download_button)
-
+        self.layout.addWidget(self.download_button)
+        
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)  # Ustawienie wartości na 0%
         self.progress_bar.setFormat("0%")  # Ustawienie tekstu domyślnego na 0%
-        layout.addWidget(self.progress_bar)
-
+        self.layout.addWidget(self.progress_bar)
+        
+        self.checkmark_label = QLabel("")  # Deklaracja nowej etykiety
+        self.checkmark_label.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.checkmark_label)
+        
         container = QWidget()
-        container.setLayout(layout)
+        container.setLayout(self.layout)
         self.setCentralWidget(container)
 
     def resizeEvent(self, event):
@@ -46,6 +50,9 @@ class MainWindow(QMainWindow):
             self.url_input.setStyleSheet("border: 2px solid green;")
         else:
             self.url_input.setStyleSheet("border: 2px solid red;")
+
+    def is_valid_youtube_url(self, url):
+        return "youtube.com" in url or "youtu.be" in url
 
     def start_download(self):
         url = self.url_input.text()
@@ -77,14 +84,17 @@ class MainWindow(QMainWindow):
         self.url_input.setStyleSheet("")  # Usunięcie podświetlenia
         self.progress_bar.setValue(100)  # Ustawienie na 100% po zakończeniu
         self.progress_bar.setStyleSheet("QProgressBar::chunk { background-color: green; }")  # Zmiana koloru paska postępu na zielony
-        self.progress_bar.setFormat(u'\u2713')  # Ustawienie symbolu ptaszka
+        self.progress_bar.setFormat("")  # Usunięcie formatu wewnętrznego paska
+        self.checkmark_label.setText("100% " + u'\u2713')  # Ustawienie wartości 100% i symbolu ptaszka na zewnątrz
         QTimer.singleShot(1000, self.reset_progress_bar)  # Usunięcie podświetlenia po 1 sekundzie
         self.url_input.clear()
 
     def reset_progress_bar(self):
-        self.progress_bar.reset()
-        self.progress_bar.setStyleSheet("")  # Przywrócenie domyślnego koloru paska postępu
-        self.progress_bar.setFormat("0%")  # Usunięcie symbolu ptaszka i przywrócenie 0%
+       self.progress_bar.reset()
+       self.progress_bar.setValue(0)  # Przywrócenie wartości na 0
+       self.progress_bar.setFormat("0%")  # Przywrócenie 0%
+       self.progress_bar.setStyleSheet("")  # Przywrócenie domyślnego koloru paska postępu
+       self.checkmark_label.setText("")  # Usunięcie symbolu ptaszka
 
     def download_failed(self, error):
         self.url_input.setStyleSheet("border: 2px solid red;")

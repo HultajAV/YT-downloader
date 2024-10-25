@@ -32,9 +32,11 @@ class DownloadThread(QThread):
 
     def yt_progress_hook(self, d):
         if d['status'] == 'downloading':
-            percentage_str = d['_percent_str'].strip()
-            percentage = float(re.sub(r'[^\d.]', '', percentage_str))  # Usuwamy niepotrzebne znaki
-            self.progress_changed.emit(percentage)
+            total_bytes = d.get('total_bytes', 1)
+            downloaded_bytes = d.get('downloaded_bytes', 0)
+            percentage = downloaded_bytes / total_bytes * 100
+            print(f"Downloading: {percentage:.2f}%")  # Debugowanie
+            self.progress_changed.emit(int(percentage))
         elif d['status'] == 'finished':
             filename = d['filename']
             new_filename = self.clean_filename(filename)
