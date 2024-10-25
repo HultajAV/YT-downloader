@@ -1,54 +1,9 @@
+import os
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QLineEdit, QProgressBar, QMessageBox
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer
-import yt_dlp as youtube_dl
-import os
-import re
-
-class DownloadThread(QThread):
-    progress_changed = pyqtSignal(int)
-    download_complete = pyqtSignal(str)
-    download_failed = pyqtSignal(str)
-
-    def __init__(self, url, save_path):
-        super().__init__()
-        self.url = url
-        self.save_path = save_path
-
-    def run(self):
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '320',
-            }],
-            'outtmpl': self.save_path,
-            'progress_hooks': [self.yt_progress_hook],
-        }
-        try:
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([self.url])
-        except Exception as e:
-            self.download_failed.emit(str(e))
-
-    def yt_progress_hook(self, d):
-        if d['status'] == 'downloading':
-            percentage_str = d['_percent_str'].strip()
-            percentage = float(re.sub(r'[^\d.]', '', percentage_str))  # Usuwamy niepotrzebne znaki
-            self.progress_changed.emit(percentage)
-        elif d['status'] == 'finished':
-            filename = d['filename']
-            new_filename = self.clean_filename(filename)
-            if filename != new_filename:
-                os.rename(filename, new_filename)
-            self.download_complete.emit(new_filename)
-
-    def clean_filename(self, filename):
-        patterns = [r"\(Official Video\)", r"\(Official Music Video\)"]
-        for pattern in patterns:
-            filename = re.sub(pattern, "", filename, flags=re.IGNORECASE).strip()
-        return filename
+from downloader import DownloadThread
+from utils import is_valid_youtube_url
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -87,17 +42,14 @@ class MainWindow(QMainWindow):
         url = self.url_input.text()
         if not url:
             self.url_input.setStyleSheet("border: 2px solid red;")
-        elif self.is_valid_youtube_url(url):
+        elif is_valid_youtube_url(url):
             self.url_input.setStyleSheet("border: 2px solid green;")
         else:
             self.url_input.setStyleSheet("border: 2px solid red;")
 
-    def is_valid_youtube_url(self, url):
-        return "youtube.com" in url or "youtu.be" in url
-
     def start_download(self):
         url = self.url_input.text()
-        if not self.is_valid_youtube_url(url):
+        if not is_valid_youtube_url(url):
             self.url_input.setStyleSheet("border: 2px solid red;")
             QTimer.singleShot(1000, lambda: self.url_input.setStyleSheet(""))  # Usunięcie podświetlenia po 1 sekundzie
             return
@@ -133,7 +85,7 @@ class MainWindow(QMainWindow):
         self.progress_bar.reset()
         self.progress_bar.setStyleSheet("")  # Przywrócenie domyślnego koloru paska postępu
         self.progress_bar.setFormat("0%")  # Usunięcie symbolu ptaszka i przywrócenie 0%
-                                
+
     def download_failed(self, error):
         self.url_input.setStyleSheet("border: 2px solid red;")
         QTimer.singleShot(1000, lambda: self.url_input.setStyleSheet(""))  # Usunięcie podświetlenia po 1 sekundzie
