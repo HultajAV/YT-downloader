@@ -71,6 +71,8 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.download_button)
 
         self.progress_bar = QProgressBar()
+        self.progress_bar.setValue(0)  # Ustawienie wartości na 0%
+        self.progress_bar.setFormat("0%")  # Ustawienie tekstu domyślnego na 0%
         layout.addWidget(self.progress_bar)
 
         container = QWidget()
@@ -117,6 +119,7 @@ class MainWindow(QMainWindow):
 
     def update_progress(self, value):
         self.progress_bar.setValue(value)
+        self.progress_bar.setFormat(f"{value}%")  # Aktualizacja formatu
 
     def download_complete(self, filename):
         self.url_input.setStyleSheet("")  # Usunięcie podświetlenia
@@ -129,8 +132,8 @@ class MainWindow(QMainWindow):
     def reset_progress_bar(self):
         self.progress_bar.reset()
         self.progress_bar.setStyleSheet("")  # Przywrócenie domyślnego koloru paska postępu
-        self.progress_bar.setFormat("")  # Usunięcie symbolu ptaszka
-
+        self.progress_bar.setFormat("0%")  # Usunięcie symbolu ptaszka i przywrócenie 0%
+                                
     def download_failed(self, error):
         self.url_input.setStyleSheet("border: 2px solid red;")
         QTimer.singleShot(1000, lambda: self.url_input.setStyleSheet(""))  # Usunięcie podświetlenia po 1 sekundzie
